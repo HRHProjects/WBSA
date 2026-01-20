@@ -194,6 +194,20 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
   padding: 38px 0 28px;
 }
 
+.page-hero {
+  background:
+    radial-gradient(900px 520px at 15% 0%, rgba(17,74,154,0.14), transparent 55%),
+    radial-gradient(700px 420px at 100% 10%, rgba(214,178,94,0.12), transparent 55%),
+    linear-gradient(#FFFFFF, #FFFFFF);
+  padding: 32px 0 18px;
+}
+
+.page-hero-inner {
+  display: grid;
+  gap: 16px;
+  align-items: center;
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
