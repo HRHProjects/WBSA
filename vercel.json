@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/contact.js": { "memory": 128, "maxDuration": 10 },
+    "api/subscribe.js": { "memory": 128, "maxDuration": 10 }
+  }
+}
