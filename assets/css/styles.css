@@ -90,8 +90,8 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 .brand:hover { text-decoration: none; }
 
 .brand-mark {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   flex: 0 0 auto;
   border-radius: 12px;
   background: rgba(255,255,255,0.10);
@@ -575,8 +575,8 @@ input:focus, textarea:focus {
   gap: 12px;
 }
 .footer-mark {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   border-radius: 14px;
   background: rgba(255,255,255,0.10);
   border: 1px solid rgba(255,255,255,0.18);
