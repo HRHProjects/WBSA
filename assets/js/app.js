@@ -16,6 +16,7 @@
     function setOpen(isOpen) {
       toggle.setAttribute('aria-expanded', String(isOpen));
       links.classList.toggle('is-open', !!isOpen);
+      document.body.classList.toggle('nav-open', !!isOpen);
     }
 
     toggle.addEventListener('click', function () {
@@ -29,9 +30,23 @@
       setOpen(false);
     });
 
+    // Close menu when clicking on the backdrop/overlay
+    links.addEventListener('click', function (e) {
+      if (e.target === links) {
+        setOpen(false);
+      }
+    });
+
     document.addEventListener('click', function (e) {
       if (e.target && e.target.closest && e.target.closest('.nav')) return;
       setOpen(false);
+    });
+
+    // Close menu on Escape key
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+      }
     });
   }
 
