@@ -1,4 +1,4 @@
-# WBSA static website (GitHub Pages + optional Vercel APIs)
+# WBSA static website 
 
 This repo is a static website for the Wood Buffalo Somali Association (WBSA).
 
@@ -36,9 +36,3 @@ The website calls:
 
 ## Note
 This site uses a single non-module JS file so it will also work when you open `index.html` directly (file://).
-
-## Quick test (local)
-1) Unzip the repo to a folder
-2) Open `index.html` (or `preview-standalone.html`) in your browser
-
-If you open only an HTML file without the `assets/` folder beside it, it will look unstyled. Use the unzipped folder.
