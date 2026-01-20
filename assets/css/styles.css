@@ -649,10 +649,13 @@ input:focus, textarea:focus {
   .nav-toggle { display: inline-flex; }
   .nav-links {
     position: fixed;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     width: 100%;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0);
     border: none;
     border-radius: 0;
     box-shadow: none;
@@ -661,14 +664,19 @@ input:focus, textarea:focus {
     flex-direction: column;
     align-items: flex-end;
     z-index: 100;
+    transition: background-color 200ms ease;
   }
-  .nav-links::before {
+  .nav-links.is-open {
+    display: flex;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .nav-links::after {
     content: "";
-    position: absolute;
+    position: fixed;
     top: 0;
     right: 0;
     width: min(92vw, 420px);
-    height: 100%;
+    height: 100vh;
     background: rgba(6, 26, 54, 0.98);
     border-left: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 0;
@@ -682,16 +690,23 @@ input:focus, textarea:focus {
     z-index: 101;
     width: min(92vw, 420px);
     text-align: left;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14.5px;
+    border-radius: 0;
   }
   .nav-links a:first-child {
-    padding-top: 18px;
+    padding-top: 20px;
   }
-  .nav-links.is-open { display: flex; }
+  .nav-links a:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
   .nav-links .btn {
     justify-content: flex-start;
     position: relative;
     z-index: 101;
     width: min(92vw, 420px);
+    padding: 14px 18px;
   }
   body.nav-open {
     overflow: hidden;

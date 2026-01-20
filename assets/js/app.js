@@ -24,22 +24,29 @@
       setOpen(!isOpen);
     });
 
+    // Close menu when clicking on a link
     links.addEventListener('click', function (e) {
       var a = e.target && e.target.closest ? e.target.closest('a') : null;
-      if (!a) return;
-      setOpen(false);
+      if (a) {
+        setOpen(false);
+      }
     });
 
-    // Close menu when clicking on the backdrop/overlay
+    // Close menu when clicking on the backdrop/overlay (outside the menu panel)
     links.addEventListener('click', function (e) {
       if (e.target === links) {
         setOpen(false);
       }
     });
 
+    // Close menu when clicking outside
     document.addEventListener('click', function (e) {
-      if (e.target && e.target.closest && e.target.closest('.nav')) return;
-      setOpen(false);
+      if (e.target && e.target.closest && !e.target.closest('.nav')) {
+        var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+        if (isOpen) {
+          setOpen(false);
+        }
+      }
     });
 
     // Close menu on Escape key
