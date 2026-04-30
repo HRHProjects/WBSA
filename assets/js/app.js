@@ -19,6 +19,20 @@
       document.body.classList.toggle('nav-open', !!isOpen);
     }
 
+    function markActiveLink() {
+      var current = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      var anchors = links.querySelectorAll('a[href]');
+      anchors.forEach(function (a) {
+        var href = (a.getAttribute('href') || '').toLowerCase();
+        if (!href || href.startsWith('http')) return;
+        if (href === current) {
+          a.setAttribute('aria-current', 'page');
+        }
+      });
+    }
+
+    markActiveLink();
+
     toggle.addEventListener('click', function () {
       var isOpen = toggle.getAttribute('aria-expanded') === 'true';
       setOpen(!isOpen);
@@ -52,6 +66,12 @@
     // Close menu on Escape key
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+      }
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 860 && toggle.getAttribute('aria-expanded') === 'true') {
         setOpen(false);
       }
     });

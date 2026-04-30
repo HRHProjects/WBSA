@@ -21,6 +21,7 @@
   --container: 1120px;
 
   --focus: 0 0 0 4px rgba(17, 74, 154, 0.25);
+  --gradient-brand: linear-gradient(135deg, #0A2B59 0%, #114A9A 100%);
 }
 
 * { box-sizing: border-box; }
@@ -30,6 +31,11 @@ body {
   color: var(--text);
   background: var(--bg);
   line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  isolation: isolate;
 }
 
 a { color: var(--brand2); text-decoration: none; }
@@ -64,12 +70,13 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 }
 
 .site-header {
-  background: var(--brand);
+  background: color-mix(in oklab, var(--brand) 92%, #020710);
   color: #fff;
   position: sticky;
   top: 0;
   z-index: 99;
-  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  backdrop-filter: saturate(140%) blur(10px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.20);
 }
 
 .header-inner {
@@ -157,6 +164,9 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
   text-decoration: none;
   background: rgba(255,255,255,0.12);
 }
+.nav-links a[aria-current="page"] {
+  background: rgba(255,255,255,0.20);
+}
 .nav-links .btn {
   padding: 10px 12px;
 }
@@ -191,7 +201,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
     radial-gradient(1100px 700px at 10% 0%, rgba(17,74,154,0.16), transparent 55%),
     radial-gradient(900px 600px at 100% 10%, rgba(214,178,94,0.14), transparent 55%),
     linear-gradient(#FFFFFF, #FFFFFF);
-  padding: 38px 0 28px;
+  padding: 52px 0 36px;
 }
 
 .page-hero {
@@ -343,7 +353,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
 }
 
 .section {
-  padding: 44px 0;
+  padding: 58px 0;
 }
 .section-alt {
   background: #F7F9FD;
@@ -376,7 +386,12 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
-  box-shadow: 0 8px 20px rgba(11,18,32,0.06);
+  box-shadow: 0 10px 24px rgba(11,18,32,0.08);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 30px rgba(11,18,32,0.12);
 }
 .card h3 {
   margin: 0 0 8px;
@@ -400,6 +415,11 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Libe
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: 0 8px 20px rgba(11,18,32,0.06);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.panel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(11,18,32,0.10);
 }
 
 .event-row {
@@ -544,7 +564,7 @@ input:focus, textarea:focus {
 }
 
 .btn-solid {
-  background: var(--brand2);
+  background: var(--gradient-brand);
   border-color: rgba(255,255,255,0.0);
   color: #fff;
   box-shadow: 0 10px 24px rgba(17,74,154,0.25);
@@ -570,9 +590,21 @@ input:focus, textarea:focus {
 }
 
 .footer {
-  background: #061A36;
+  background: linear-gradient(165deg, #061A36 0%, #09264E 100%);
   color: rgba(255,255,255,0.92);
   padding: 28px 0 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .slide:hover .slide-img {
+    transform: none;
+  }
 }
 .footer a { color: #fff; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,0.35); }
 .footer a:hover { border-bottom-style: solid; }
@@ -650,6 +682,7 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 980px) {
+  .hero { padding-top: 42px; }
   .hero-grid { grid-template-columns: 1fr; }
   .cards { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
@@ -710,7 +743,7 @@ input:focus, textarea:focus {
     border-radius: 0;
   }
   .nav-links a:first-child {
-    padding-top: 20px;
+    padding-top: 94px;
   }
   .nav-links a:hover {
     background: rgba(255, 255, 255, 0.12);
