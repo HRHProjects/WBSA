@@ -5,7 +5,7 @@ This repo is a static website for the Wood Buffalo Somali Association (WBSA).
 ## Contact details in the site
 - Email: Info@wbsa.ca
 - Phone: 587-536-1335
-- Address: 10012 Franklin Ave Unit 207, Fort McMurray, AB T9H 2K6
+- Address: 10012 Franklin Ave Unit 206, Fort McMurray, AB T9H 2K6
 
 ## Deploy (two common options)
 
