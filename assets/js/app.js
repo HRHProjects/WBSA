@@ -71,7 +71,7 @@
     });
 
     window.addEventListener('resize', function () {
-      if (window.innerWidth > 860 && toggle.getAttribute('aria-expanded') === 'true') {
+      if (window.innerWidth > 1100 && toggle.getAttribute('aria-expanded') === 'true') {
         setOpen(false);
       }
     });
@@ -126,6 +126,43 @@
   }
 
   function nowTs() { return Date.now(); }
+
+  function initBusinessDirectory() {
+    var form = qs('[data-business-filter-form]');
+    if (!form) return;
+
+    var searchInput = qs('[data-business-search]', form);
+    var categorySelect = qs('[data-business-category]', form);
+    var resultCount = qs('[data-business-result-count]');
+    var emptyState = qs('[data-business-empty]');
+    var listings = Array.prototype.slice.call(document.querySelectorAll('.business-listing'));
+    if (!searchInput || !categorySelect || !resultCount || !emptyState || !listings.length) return;
+
+    function filterListings() {
+      var query = searchInput.value.trim().toLowerCase();
+      var selectedCategory = categorySelect.value.toLowerCase();
+      var visibleCount = 0;
+
+      listings.forEach(function (listing) {
+        var type = qs('.business-type', listing);
+        var listingCategory = type ? type.textContent.trim().toLowerCase() : '';
+        var matchesQuery = listing.textContent.toLowerCase().indexOf(query) !== -1;
+        var matchesCategory = selectedCategory === 'all' || listingCategory === selectedCategory;
+        listing.hidden = !(matchesQuery && matchesCategory);
+        if (!listing.hidden) visibleCount += 1;
+      });
+
+      setStatus(resultCount, visibleCount + (visibleCount === 1 ? ' business' : ' businesses'));
+      emptyState.hidden = visibleCount !== 0;
+    }
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+    });
+    searchInput.addEventListener('input', filterListings);
+    categorySelect.addEventListener('change', filterListings);
+    filterListings();
+  }
 
   function initForms() {
     var contactForm = qs('[data-contact-form]');
@@ -218,5 +255,6 @@
   initYear();
   initNav();
   initSliderHover();
+  initBusinessDirectory();
   initForms();
 })();
