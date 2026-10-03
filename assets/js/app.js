@@ -127,6 +127,80 @@
 
   function nowTs() { return Date.now(); }
 
+  function createTextElement(tagName, className, text) {
+    var element = document.createElement(tagName);
+    if (className) element.className = className;
+    element.textContent = text || '';
+    return element;
+  }
+
+  function ensureBusinessData() {
+    var businesses = window.WBSA_BUSINESSES || [];
+    if (!businesses.some(function (business) { return business.id === 'craftywand'; })) {
+      businesses.push({
+        id: 'craftywand',
+        name: 'CraftyWand',
+        category: 'Packaging design software',
+        city: 'Online',
+        address: '',
+        phone: '',
+        phoneHref: '',
+        description: 'Free browser-based packaging design software for dielines, 3D mockups, and print-ready files.',
+        logo: 'https://www.craftywand.com/og-image.png',
+        profile: 'https://www.craftywand.com/'
+      });
+    }
+    window.WBSA_BUSINESSES = businesses;
+  }
+
+  function createBusinessCard(business) {
+    var detailUrl = 'business.html?id=' + encodeURIComponent(business.id);
+    var card = document.createElement('article');
+    card.className = 'card business-listing';
+
+    var logoLink = document.createElement('a');
+    logoLink.className = 'business-listing-logo';
+    logoLink.href = detailUrl;
+    logoLink.setAttribute('aria-label', business.name + ' details');
+    if (business.logo) {
+      var image = document.createElement('img');
+      image.src = business.logo;
+      image.alt = business.name + ' logo';
+      image.loading = 'lazy';
+      logoLink.appendChild(image);
+    } else {
+      var initials = business.name.split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0); }).join('').toUpperCase();
+      logoLink.appendChild(createTextElement('span', 'business-logo-placeholder', initials));
+    }
+
+    var content = document.createElement('div');
+    content.className = 'business-listing-content';
+    content.appendChild(createTextElement('p', 'business-type', business.category));
+    content.appendChild(createTextElement('h3', '', business.name));
+    content.appendChild(createTextElement('p', '', business.description || business.category + ' business serving ' + business.city + '.'));
+
+    var details = document.createElement('p');
+    details.className = 'business-meta';
+    details.textContent = [business.address, business.city].filter(Boolean).join(', ');
+    if (business.phone) {
+      if (details.textContent) details.appendChild(document.createTextNode(' · '));
+      var phoneLink = document.createElement('a');
+      phoneLink.href = 'tel:' + (business.phoneHref || business.phone.replace(/[^0-9+]/g, ''));
+      phoneLink.textContent = business.phone;
+      details.appendChild(phoneLink);
+    }
+    content.appendChild(details);
+
+    var detailLink = document.createElement('a');
+    detailLink.className = 'business-profile-link';
+    detailLink.href = detailUrl;
+    detailLink.textContent = 'Business details';
+    content.appendChild(detailLink);
+    card.appendChild(logoLink);
+    card.appendChild(content);
+    return card;
+  }
+
   function initBusinessDirectory() {
     var form = qs('[data-business-filter-form]');
     if (!form) return;
@@ -135,8 +209,46 @@
     var categorySelect = qs('[data-business-category]', form);
     var resultCount = qs('[data-business-result-count]');
     var emptyState = qs('[data-business-empty]');
-    var listings = Array.prototype.slice.call(document.querySelectorAll('.business-listing'));
-    if (!searchInput || !categorySelect || !resultCount || !emptyState || !listings.length) return;
+    var listingsContainer = qs('[data-business-listings]');
+    var businesses = window.WBSA_BUSINESSES || [];
+    if (!searchInput || !categorySelect || !resultCount || !emptyState || !listingsContainer || !businesses.length) return;
+
+    listingsContainer.replaceChildren();
+    businesses.forEach(function (business) {
+      listingsContainer.appendChild(createBusinessCard(business));
+    });
+    var categories = Array.from(new Set(businesses.map(function (business) { return business.category; }).filter(Boolean))).sort();
+    categorySelect.replaceChildren();
+    var allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All categories';
+    categorySelect.appendChild(allOption);
+    categories.forEach(function (category) {
+      var option = document.createElement('option');
+      option.value = category.toLowerCase();
+      option.textContent = category;
+      categorySelect.appendChild(option);
+    });
+
+    var listings = Array.prototype.slice.call(listingsContainer.querySelectorAll('.business-listing'));
+    var schemaScript = qs('script[type="application/ld+json"]');
+    if (schemaScript) {
+      var schemaItems = businesses.map(function (business, index) {
+        return {
+          '@type': 'ListItem',
+          position: index + 1,
+          name: business.name,
+          url: 'https://www.wbsa.ca/business.html?id=' + encodeURIComponent(business.id)
+        };
+      });
+      schemaScript.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Fort McMurray Local Business Directory',
+        url: 'https://www.wbsa.ca/local-businesses.html',
+        mainEntity: { '@type': 'ItemList', numberOfItems: businesses.length, itemListElement: schemaItems }
+      });
+    }
 
     function filterListings() {
       var query = searchInput.value.trim().toLowerCase();
@@ -162,6 +274,106 @@
     searchInput.addEventListener('input', filterListings);
     categorySelect.addEventListener('change', filterListings);
     filterListings();
+  }
+
+  function initBusinessDetails() {
+    var container = qs('[data-business-detail]');
+    if (!container) return;
+
+    var businessId = new URLSearchParams(window.location.search).get('id');
+    var businesses = window.WBSA_BUSINESSES || [];
+    var business = businesses.find(function (item) { return item.id === businessId; });
+    if (!business) {
+      document.title = 'Business listing not found | WBSA';
+      var missingHeading = qs('#businessPageTitle');
+      if (missingHeading) missingHeading.textContent = 'Business listing not found';
+      container.appendChild(createTextElement('p', 'directory-empty', 'This business listing could not be found.'));
+      return;
+    }
+
+    var title = business.name + ' | Fort McMurray Local Business Directory';
+    var description = business.description || business.name + ' in ' + business.city + '. View business details and contact information.';
+    var canonicalUrl = 'https://www.wbsa.ca/business.html?id=' + encodeURIComponent(business.id);
+    document.title = title;
+    var pageHeading = qs('#businessPageTitle');
+    if (pageHeading) pageHeading.textContent = business.name;
+    var descriptionMeta = qs('meta[name="description"]');
+    if (descriptionMeta) descriptionMeta.content = description.slice(0, 160);
+    var canonical = qs('link[rel="canonical"]');
+    if (canonical) canonical.href = canonicalUrl;
+    var socialTitle = qs('meta[property="og:title"]');
+    if (socialTitle) socialTitle.content = title;
+    var socialDescription = qs('meta[property="og:description"]');
+    if (socialDescription) socialDescription.content = description.slice(0, 160);
+    var socialUrl = qs('meta[property="og:url"]');
+    if (socialUrl) socialUrl.content = canonicalUrl;
+
+    var article = document.createElement('article');
+    article.className = 'business-detail';
+    if (business.logo) {
+      var figure = document.createElement('div');
+      figure.className = 'business-detail-logo';
+      var image = document.createElement('img');
+      image.src = business.logo;
+      image.alt = business.name + ' logo';
+      figure.appendChild(image);
+      article.appendChild(figure);
+    }
+
+    var content = document.createElement('div');
+    content.className = 'business-detail-content';
+    content.appendChild(createTextElement('p', 'business-type', business.category));
+    content.appendChild(createTextElement('h1', '', business.name));
+    content.appendChild(createTextElement('p', 'lead', description));
+    if (business.address || business.city) {
+      content.appendChild(createTextElement('p', 'business-detail-meta', [business.address, business.city].filter(Boolean).join(', ')));
+    }
+    if (business.phone) {
+      var phone = document.createElement('p');
+      phone.className = 'business-detail-meta';
+      var phoneLink = document.createElement('a');
+      phoneLink.href = 'tel:' + (business.phoneHref || business.phone.replace(/[^0-9+]/g, ''));
+      phoneLink.textContent = business.phone;
+      phone.appendChild(phoneLink);
+      content.appendChild(phone);
+    }
+
+    var actions = document.createElement('div');
+    actions.className = 'business-detail-actions';
+    var profileLink = document.createElement('a');
+    profileLink.className = 'btn btn-solid';
+    profileLink.href = business.profile;
+    profileLink.target = '_blank';
+    profileLink.rel = 'noopener';
+    profileLink.textContent = 'Business website and full profile';
+    actions.appendChild(profileLink);
+    var backLink = document.createElement('a');
+    backLink.className = 'btn btn-ghost';
+    backLink.href = 'local-businesses.html';
+    backLink.textContent = 'Back to directory';
+    actions.appendChild(backLink);
+    content.appendChild(actions);
+    article.appendChild(content);
+    container.replaceChildren(article);
+
+    var detailSchema = qs('[data-business-detail-schema]');
+    if (detailSchema) {
+      detailSchema.textContent = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: business.name,
+        description: description,
+        url: business.profile,
+        telephone: business.phone || undefined,
+        address: business.address ? {
+          '@type': 'PostalAddress',
+          streetAddress: business.address,
+          addressLocality: business.city,
+          addressRegion: 'AB',
+          addressCountry: 'CA'
+        } : undefined
+      });
+    }
   }
 
   function initForms() {
@@ -255,6 +467,8 @@
   initYear();
   initNav();
   initSliderHover();
+  ensureBusinessData();
   initBusinessDirectory();
+  initBusinessDetails();
   initForms();
 })();
