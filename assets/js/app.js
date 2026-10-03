@@ -210,13 +210,11 @@
     var resultCount = qs('[data-business-result-count]');
     var emptyState = qs('[data-business-empty]');
     var listingsContainer = qs('[data-business-listings]');
+    var pagination = qs('[data-business-pagination]');
     var businesses = window.WBSA_BUSINESSES || [];
-    if (!searchInput || !categorySelect || !resultCount || !emptyState || !listingsContainer || !businesses.length) return;
+    if (!searchInput || !categorySelect || !resultCount || !emptyState || !listingsContainer || !pagination || !businesses.length) return;
 
     listingsContainer.replaceChildren();
-    businesses.forEach(function (business) {
-      listingsContainer.appendChild(createBusinessCard(business));
-    });
     var categories = Array.from(new Set(businesses.map(function (business) { return business.category; }).filter(Boolean))).sort();
     categorySelect.replaceChildren();
     var allOption = document.createElement('option');
@@ -230,7 +228,15 @@
       categorySelect.appendChild(option);
     });
 
-    var listings = Array.prototype.slice.call(listingsContainer.querySelectorAll('.business-listing'));
+    var pageSize = 20;
+    var initialParams = new URLSearchParams(window.location.search);
+    var currentPage = Math.max(1, Number.parseInt(initialParams.get('page') || '1', 10) || 1);
+    searchInput.value = initialParams.get('q') || '';
+    var requestedCategory = (initialParams.get('category') || 'all').toLowerCase();
+    if (categories.some(function (category) { return category.toLowerCase() === requestedCategory; })) {
+      categorySelect.value = requestedCategory;
+    }
+
     var schemaScript = qs('script[type="application/ld+json"]');
     if (schemaScript) {
       var schemaItems = businesses.map(function (business, index) {
@@ -250,30 +256,94 @@
       });
     }
 
-    function filterListings() {
+    function updateUrl(historyMethod) {
+      if (!window.history || !window.history[historyMethod]) return;
+      var params = new URLSearchParams();
+      if (currentPage > 1) params.set('page', String(currentPage));
+      if (searchInput.value.trim()) params.set('q', searchInput.value.trim());
+      if (categorySelect.value !== 'all') params.set('category', categorySelect.value);
+      var queryString = params.toString();
+      window.history[historyMethod](null, '', window.location.pathname + (queryString ? '?' + queryString : ''));
+    }
+
+    function renderPagination(pageCount) {
+      pagination.replaceChildren();
+      pagination.hidden = pageCount <= 1;
+      if (pageCount <= 1) return;
+
+      function addPageButton(label, page, ariaLabel, isCurrent, isDisabled) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'directory-page-button' + (isCurrent ? ' is-current' : '');
+        button.textContent = label;
+        button.setAttribute('aria-label', ariaLabel);
+        if (isCurrent) button.setAttribute('aria-current', 'page');
+        button.disabled = !!isDisabled;
+        if (!isDisabled) button.setAttribute('data-page', String(page));
+        pagination.appendChild(button);
+      }
+
+      addPageButton('Previous', currentPage - 1, 'Previous page', false, currentPage === 1);
+      for (var page = 1; page <= pageCount; page += 1) {
+        addPageButton(String(page), page, 'Page ' + page, page === currentPage, false);
+      }
+      addPageButton('Next', currentPage + 1, 'Next page', false, currentPage === pageCount);
+    }
+
+    function filterListings(historyMethod) {
       var query = searchInput.value.trim().toLowerCase();
       var selectedCategory = categorySelect.value.toLowerCase();
-      var visibleCount = 0;
-
-      listings.forEach(function (listing) {
-        var type = qs('.business-type', listing);
-        var listingCategory = type ? type.textContent.trim().toLowerCase() : '';
-        var matchesQuery = listing.textContent.toLowerCase().indexOf(query) !== -1;
-        var matchesCategory = selectedCategory === 'all' || listingCategory === selectedCategory;
-        listing.hidden = !(matchesQuery && matchesCategory);
-        if (!listing.hidden) visibleCount += 1;
+      var matches = businesses.filter(function (business) {
+        var searchableText = [business.name, business.category, business.description, business.address, business.city, business.phone].join(' ').toLowerCase();
+        var matchesQuery = searchableText.indexOf(query) !== -1;
+        var matchesCategory = selectedCategory === 'all' || business.category.toLowerCase() === selectedCategory;
+        return matchesQuery && matchesCategory;
       });
 
-      setStatus(resultCount, visibleCount + (visibleCount === 1 ? ' business' : ' businesses'));
-      emptyState.hidden = visibleCount !== 0;
+      var pageCount = Math.max(1, Math.ceil(matches.length / pageSize));
+      currentPage = Math.min(currentPage, pageCount);
+      var firstIndex = (currentPage - 1) * pageSize;
+      var pageBusinesses = matches.slice(firstIndex, firstIndex + pageSize);
+      listingsContainer.replaceChildren();
+      pageBusinesses.forEach(function (business) {
+        listingsContainer.appendChild(createBusinessCard(business));
+      });
+
+      var firstResult = matches.length ? firstIndex + 1 : 0;
+      var lastResult = Math.min(firstIndex + pageSize, matches.length);
+      setStatus(resultCount, matches.length ? 'Showing ' + firstResult + '–' + lastResult + ' of ' + matches.length + ' businesses' : '0 businesses');
+      emptyState.hidden = matches.length !== 0;
+      renderPagination(pageCount);
+      updateUrl(historyMethod || 'replaceState');
     }
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
     });
-    searchInput.addEventListener('input', filterListings);
-    categorySelect.addEventListener('change', filterListings);
-    filterListings();
+    searchInput.addEventListener('input', function () {
+      currentPage = 1;
+      filterListings('replaceState');
+    });
+    categorySelect.addEventListener('change', function () {
+      currentPage = 1;
+      filterListings('replaceState');
+    });
+    pagination.addEventListener('click', function (event) {
+      var button = event.target && event.target.closest ? event.target.closest('button[data-page]') : null;
+      if (!button) return;
+      currentPage = Number.parseInt(button.getAttribute('data-page'), 10);
+      filterListings('pushState');
+      listingsContainer.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    window.addEventListener('popstate', function () {
+      var params = new URLSearchParams(window.location.search);
+      currentPage = Math.max(1, Number.parseInt(params.get('page') || '1', 10) || 1);
+      searchInput.value = params.get('q') || '';
+      var category = (params.get('category') || 'all').toLowerCase();
+      categorySelect.value = categories.some(function (item) { return item.toLowerCase() === category; }) ? category : 'all';
+      filterListings('replaceState');
+    });
+    filterListings('replaceState');
   }
 
   function initBusinessDetails() {
